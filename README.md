@@ -169,8 +169,11 @@ python -m venv .venv
 # On Linux / macOS:
 source .venv/bin/activate
 
-# Install dependencies
+# Install dashboard and test dependencies
 pip install -r requirements.txt
+
+# Optional: install Pygame for the interactive desktop simulator
+pip install -r requirements-desktop.txt
 ```
 
 ---
@@ -188,7 +191,7 @@ The app is served at `http://localhost:8501` by default.
 
 #### Deploy to Streamlit Community Cloud
 
-The dashboard entrypoint and `requirements.txt` are in the repository root, so use these settings when creating the Cloud app:
+The dashboard entrypoint and its dependencies in `requirements.txt` are in the repository root, so use these settings when creating the Cloud app:
 
 1. Push the project to GitHub, including `app.py`, `src/`, and `requirements.txt`.
 2. In [Streamlit Community Cloud](https://share.streamlit.io/), choose **Create app** and select this repository.
@@ -196,7 +199,7 @@ The dashboard entrypoint and `requirements.txt` are in the repository root, so u
 4. In **Advanced settings**, select Python **3.11**, which is the version tested with this project.
 5. Select **Deploy**. No Streamlit secrets or external services are required by the current app.
 
-Cloud installs the dependencies from `requirements.txt`. If a deployment fails, check the app's Cloud logs for dependency or startup errors before changing the runtime configuration.
+Cloud installs the dependencies from `requirements.txt`. Pygame is intentionally kept in `requirements-desktop.txt` because it is used only by the optional desktop simulator and otherwise requires native SDL build tools that are not present in the Cloud build environment. The Streamlit dashboard does not require Pygame. If a deployment fails, check the app's Cloud logs for dependency or startup errors before changing the runtime configuration.
 
 #### Streamlit Dashboard Features:
 - **Grid Dimension Sliders**: Customize row and column count (5 to 50).
