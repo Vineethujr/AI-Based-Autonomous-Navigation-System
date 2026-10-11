@@ -182,6 +182,8 @@ pip install -r requirements-desktop.txt
 
 ### Option A: Streamlit Live Web Dashboard (Recommended)
 
+**Live app:** [AI-Based Autonomous Navigation System](https://ai-based-autonomous-navigation-system-epyuerbqsubrjqgq8xaw9x.streamlit.app)
+
 Launch the interactive web dashboard in your browser:
 
 ```bash
