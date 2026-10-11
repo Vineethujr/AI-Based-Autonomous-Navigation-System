@@ -10,34 +10,77 @@ Supports two simulation interfaces:
 
 ## 1. Project Structure
 
-```text
-AI-Based Autonomous Navigation System/
-|-- .gitignore                  # Git ignore rules (virtualenv, caches, results)
-|-- requirements.txt            # Declared dependencies; Streamlit supplies pandas for the interactive grid
-|-- app.py                      # Interactive Streamlit browser dashboard entrypoint
-|-- main.py                     # Desktop Pygame & headless CLI simulation entrypoint
-|-- src/
-|   |-- __init__.py             # Public package exports
-|   |-- config.py               # Grid dimensions, colors, timing, and cardinal movements
-|   |-- environment.py          # 2D Occupancy grid, spatial validation, neighbor queries
-|   |-- path_planning.py        # Planners: AStarPlanner, DijkstraPlanner, BFSPlanner, get_planner
-|   |-- robot.py                # Robot state machine, heading, and movement history
-|   |-- navigation.py           # Mission controller, active path monitoring, replanning
-|   |-- metrics.py              # Performance metrics tracker and JSON export
-|   |-- simulation.py           # Pygame visualizer and headless execution engine
-|-- tests/
-|   |-- __init__.py             # Test package initialization
-|   |-- test_environment.py     # Unit tests for grid representation and validation
-|   |-- test_path_planning.py   # Tests for A*, Dijkstra, BFS, path invariants, and replanning
-|   |-- test_streamlit_integration.py # Tests for scenarios, grid interactions, metrics, and rendering
-|-- docs/
-|   |-- architecture.md         # Formal technical architectural specification
-|   |-- learning_guide_and_interview_qa.md # Deep-dive learning handbook & 28+ interview Q&As
-|-- Screenshots/                # Dashboard, obstacle, navigation, and result screenshots
-|-- assets/
-|   |-- .gitkeep                # Placeholder for optional static assets
-|-- results/
-|   |-- .gitkeep                # Generated metrics are ignored; directory is kept in the project
+The diagram highlights the main application files and the modules grouped under each project folder.
+
+<!-- mermaid-checked: no \n, no em-dash/en-dash, no {} in labels, subgraphs are id["label"], arrows are -->|"label"|, all subgraphs closed by end, ids unique -->
+```mermaid
+flowchart TD
+    tRoot["AI-Based Autonomous Navigation System"]
+    tReadme["README.md"]
+    tRequirements["requirements.txt"]
+    tIgnore[".gitignore"]
+    tApp["app.py"]
+    tMain["main.py"]
+    tSrc["src/"]
+    tTests["tests/"]
+    tDocs["docs/"]
+    tScreens["Screenshots/"]
+    tAssets["assets/"]
+    tResults["results/"]
+    tInit["src/__init__.py"]
+    tConfig["src/config.py"]
+    tEnvironment["src/environment.py"]
+    tPlanning["src/path_planning.py"]
+    tRobot["src/robot.py"]
+    tNavigation["src/navigation.py"]
+    tMetrics["src/metrics.py"]
+    tSimulation["src/simulation.py"]
+    tTestInit["tests/__init__.py"]
+    tEnvTests["tests/test_environment.py"]
+    tPlanTests["tests/test_path_planning.py"]
+    tAppTests["tests/test_streamlit_integration.py"]
+    tArchDoc["docs/architecture.md"]
+    tGuideDoc["docs/learning_guide_and_interview_qa.md"]
+    tScreen1["Screenshots/01_AI_Nav_Grid.png"]
+    tScreen2["Screenshots/02_Obstacle_Placed.png"]
+    tScreen3["Screenshots/03_Live_Navigation.png"]
+    tScreen4["Screenshots/04_Goal_Reached.png"]
+    tScreen5["Screenshots/05_Simulation_Result.png"]
+    tAssetsKeep["assets/.gitkeep"]
+    tResultsKeep["results/.gitkeep"]
+
+    tRoot --> tReadme
+    tRoot --> tRequirements
+    tRoot --> tIgnore
+    tRoot --> tApp
+    tRoot --> tMain
+    tRoot --> tSrc
+    tRoot --> tTests
+    tRoot --> tDocs
+    tRoot --> tScreens
+    tRoot --> tAssets
+    tRoot --> tResults
+    tSrc --> tInit
+    tSrc --> tConfig
+    tSrc --> tEnvironment
+    tSrc --> tPlanning
+    tSrc --> tRobot
+    tSrc --> tNavigation
+    tSrc --> tMetrics
+    tSrc --> tSimulation
+    tTests --> tTestInit
+    tTests --> tEnvTests
+    tTests --> tPlanTests
+    tTests --> tAppTests
+    tDocs --> tArchDoc
+    tDocs --> tGuideDoc
+    tScreens --> tScreen1
+    tScreens --> tScreen2
+    tScreens --> tScreen3
+    tScreens --> tScreen4
+    tScreens --> tScreen5
+    tAssets --> tAssetsKeep
+    tResults --> tResultsKeep
 ```
 
 ---
@@ -59,6 +102,49 @@ AI-Based Autonomous Navigation System/
 - **Seeded Scenario Generation**: Open, random, maze-like, corridor, U-trap, and unreachable maps preserve the `(row, column)` grid convention and leave start and goal free. Random layouts are reproducible from their seed and density.
 - **Metrics Tracking**: Captures initial planning time, nodes expanded, step count, replan count, total replan latency, total run time, and path efficiency ratio ($L_{\text{optimal}} / N_{\text{steps}}$).
 - **Headless Mode Support**: Runs a simulation with `--headless` without opening a graphical window, suitable for automated checks and CI. The CLI runs one simulation per invocation; it does not provide a batch-benchmarking interface.
+
+### Architecture Diagram
+
+The Streamlit dashboard and Pygame/CLI simulation are separate interfaces over the grid navigation components. The desktop/headless runner coordinates these components through `Simulation`; the dashboard creates and controls them through Streamlit session state.
+
+<!-- mermaid-checked: no \n, no em-dash/en-dash, no {} in labels, subgraphs are id["label"], arrows are -->|"label"|, all subgraphs closed by end, ids unique -->
+```mermaid
+flowchart TD
+    subgraph aInterfaces["User Interfaces"]
+        aBrowser["Browser User"]
+        aStreamlit["app.py - Streamlit Dashboard"]
+        aDesktop["Desktop User"]
+        aCli["main.py - Desktop or Headless"]
+        aSimulation["Simulation Runner"]
+        aPygame["Pygame Visualizer"]
+    end
+
+    subgraph aNavigation["Navigation Components"]
+        aController["NavigationController"]
+        aPlanner["A star, Dijkstra, BFS"]
+        aEnvironment["GridEnvironment"]
+        aRobot["Robot State"]
+        aMetrics["MetricsTracker"]
+    end
+
+    aBrowser --> aStreamlit
+    aStreamlit --> aController
+    aStreamlit -->|"renders map and metrics"| aEnvironment
+    aStreamlit -->|"shows robot state"| aRobot
+    aStreamlit -->|"shows performance data"| aMetrics
+    aDesktop --> aCli
+    aCli --> aSimulation
+    aSimulation --> aPygame
+    aSimulation --> aController
+    aController -->|"requests routes"| aPlanner
+    aController -->|"reads obstacles"| aEnvironment
+    aPlanner -->|"checks free neighbors"| aEnvironment
+    aController -->|"advances and replans"| aRobot
+    aController -->|"records navigation"| aMetrics
+    aPygame -->|"renders grid and robot"| aEnvironment
+    aPygame -->|"renders route and position"| aRobot
+    aPygame -->|"shows execution stats"| aMetrics
+```
 
 ---
 
@@ -99,6 +185,18 @@ Launch the interactive web dashboard in your browser:
 streamlit run app.py
 ```
 The app is served at `http://localhost:8501` by default.
+
+#### Deploy to Streamlit Community Cloud
+
+The dashboard entrypoint and `requirements.txt` are in the repository root, so use these settings when creating the Cloud app:
+
+1. Push the project to GitHub, including `app.py`, `src/`, and `requirements.txt`.
+2. In [Streamlit Community Cloud](https://share.streamlit.io/), choose **Create app** and select this repository.
+3. Set the branch to `main` and the main file path to `app.py`.
+4. In **Advanced settings**, select Python **3.11**, which is the version tested with this project.
+5. Select **Deploy**. No Streamlit secrets or external services are required by the current app.
+
+Cloud installs the dependencies from `requirements.txt`. If a deployment fails, check the app's Cloud logs for dependency or startup errors before changing the runtime configuration.
 
 #### Streamlit Dashboard Features:
 - **Grid Dimension Sliders**: Customize row and column count (5 to 50).
